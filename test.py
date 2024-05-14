@@ -2,7 +2,9 @@ from numba import jit, cuda
 import numpy as np
 # to measure exec time
 from timeit import default_timer as timer
+import torch
 
+print(torch.cuda.is_available())
 
 # normal function to run on cpu
 def func(a):
