@@ -19,7 +19,6 @@ def anglescalculaatorsthreepoints(a1, a2, b1, b2, c1, c2):
 
 class Vectorizer:
     def __init__(self, output_path):
-        self.lstcsv = []
         self.finalCsv = []
         self.finalcsvAngles = []
         self.dict_kp = {
@@ -88,36 +87,42 @@ class Vectorizer:
         frame_data = {
             "etiqueta": self.output_path,
             "frame": self.frames,
-            "nose": np.append(self.dict_kp["nose"], vectors[0]),
-            "left_shoulder": np.append(self.dict_kp["left_shoulder"], vectors[5]),
-            "right_shoulder": np.append(self.dict_kp["right_shoulder"], vectors[6]),
-            "left_elbow": np.append(self.dict_kp["left_elbow"], vectors[7]),
-            "right_elbow": np.append(self.dict_kp["right_elbow"], vectors[8]),
-            "left_wrist": np.append(self.dict_kp["left_wrist"], vectors[9]),
-            "right_wrist": np.append(self.dict_kp["right_wrist"], vectors[10]),
-            "left_hip": np.append(self.dict_kp["left_hip"], vectors[11]),
-            "right_hip": np.append(self.dict_kp["right_hip"], vectors[12]),
-            "left_knee": np.append(self.dict_kp["left_knee"], vectors[13]),
-            "right_knee": np.append(self.dict_kp["right_knee"], vectors[14]),
-            "left_ankle": np.append(self.dict_kp["left_ankle"], vectors[15]),
-            "right_ankle": np.append(self.dict_kp["right_ankle"], vectors[16]),
+            "nose": np.append(self.dict_kp["nose"], vectors[0]).tolist(),
+            "left_shoulder": np.append(self.dict_kp["left_shoulder"], vectors[5]).tolist(),
+            "right_shoulder": np.append(self.dict_kp["left_shoulder"], vectors[6]).tolist(),
+            "left_elbow": np.append(self.dict_kp["left_shoulder"], vectors[7]).tolist(),
+            "right_elbow": np.append(self.dict_kp["left_shoulder"], vectors[8]).tolist(),
+            "left_wrist": np.append(self.dict_kp["left_shoulder"], vectors[9]).tolist(),
+            "right_wrist": np.append(self.dict_kp["left_shoulder"], vectors[10]).tolist(),
+            "left_hip": np.append(self.dict_kp["left_shoulder"], vectors[11]).tolist(),
+            "right_hip": np.append(self.dict_kp["left_shoulder"], vectors[12]).tolist(),
+            "left_knee": np.append(self.dict_kp["left_shoulder"], vectors[13]).tolist(),
+            "right_knee": np.append(self.dict_kp["left_shoulder"], vectors[14]).tolist(),
+            "left_ankle": np.append(self.dict_kp["left_shoulder"], vectors[15]).tolist(),
+            "right_ankle": np.append(self.dict_kp["left_shoulder"], vectors[16]).tolist(),
             "mid_shoulder": np.append(self.dict_kp["mid_shoulder"], np.array([
-            midscaculators(vectors[5][0], vectors[6][0], vectors[5][1], vectors[6][1])])),
-            "mid_hip": np.append(self.dict_kp["mid_hip"], np.array([
-            midscaculators(vectors[11][0], vectors[12][0], vectors[11][1], vectors[12][1])]))
+            midscaculators(vectors[5][0], vectors[6][0], vectors[5][1], vectors[6][1])])).tolist(),
+            "mid_hip":  np.append(self.dict_kp["mid_hip"], np.array([
+            midscaculators(vectors[11][0], vectors[12][0], vectors[11][1], vectors[12][1])])).tolist()
         }
-
-        
         self.finalCsv.append(frame_data)
-        frame_data = {}
+
 
     def keypoints_csv_generator(self):
+        frame_data = {}
         for key in self.dict_kp:
             if key != "mid_shoulder" and key != "mid_hip":
                 self.dict_kp[key] = np.reshape(self.dict_kp[key], (self.frames, 3))
             else:
                 self.dict_kp[key] = np.reshape(self.dict_kp[key], (self.frames, 2))
-       
+        print(self.dict_kp['nose'])
+
+        for key in self.dict_kp:
+            for i in range(self.frames):
+                frame_data['etiqueta'].append(self.output_path)
+                frame_data['frame'].append(i+1)
+                frame_data[key][i].append(self.dict_kp[key][i].tolist())
+
         for key in self.dict_kp:
             if not os.path.exists("csvs/keypoints/" + self.output_path):
                 os.makedirs("csvs/keypoints/" + self.output_path)
@@ -130,7 +135,7 @@ class Vectorizer:
         with open("csvs/keypoints/" + self.output_path + "/final_keypoints.csv", "w", newline="") as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=keys)
             writer.writeheader()
-            for data in self.finalCsv:
+            for data in self.frame_data:
                 writer.writerow(data)
 
     def angles_csv_generator(self):
