@@ -3,6 +3,7 @@ import os.path
 import numpy as np
 import math
 from matplotlib import pyplot as my_plot
+import csv
 
 def midscaculators(left_x, right_x, left_y, right_y):
     mid = np.array([((left_x + right_x) / 2), ((left_y + right_y) / 2)])
@@ -18,6 +19,8 @@ def anglescalculaatorsthreepoints(a1, a2, b1, b2, c1, c2):
 
 class Vectorizer:
     def __init__(self, output_path):
+        self.finalCsv = []
+        self.finalcsvAngles = []
         self.dict_kp = {
             "nose": np.array([]),
             "left_shoulder": np.array([]),
@@ -79,6 +82,29 @@ class Vectorizer:
             midscaculators(vectors[5][0], vectors[6][0], vectors[5][1], vectors[6][1])]))
         self.dict_kp["mid_hip"] = np.append(self.dict_kp["mid_hip"], np.array([
             midscaculators(vectors[11][0], vectors[12][0], vectors[11][1], vectors[12][1])]))
+        
+        
+        frame_data = {
+            "etiqueta": self.output_path,
+            "frame": self.frames,
+            "nose": self.dict_kp["nose"][-1].tolist(),
+            "left_shoulder": self.dict_kp["left_shoulder"][-1].tolist(),
+            "right_shoulder": self.dict_kp["right_shoulder"][-1].tolist(),
+            "left_elbow": self.dict_kp["left_elbow"][-1].tolist(),
+            "right_elbow": self.dict_kp["right_elbow"][-1].tolist(),
+            "left_wrist": self.dict_kp["left_wrist"][-1].tolist(),
+            "right_wrist": self.dict_kp["right_wrist"][-1].tolist(),
+            "left_hip": self.dict_kp["left_hip"][-1].tolist(),
+            "right_hip": self.dict_kp["right_hip"][-1].tolist(),
+            "left_knee": self.dict_kp["left_knee"][-1].tolist(),
+            "right_knee": self.dict_kp["right_knee"][-1].tolist(),
+            "left_ankle": self.dict_kp["left_ankle"][-1].tolist(),
+            "right_ankle": self.dict_kp["right_ankle"][-1].tolist(),
+            "mid_shoulder": self.dict_kp["mid_shoulder"][-1].tolist(),
+            "mid_hip": self.dict_kp["mid_hip"][-1].tolist()
+        }
+        self.finalCsv.append(frame_data)
+
 
     def keypoints_csv_generator(self):
         for key in self.dict_kp:
@@ -86,11 +112,21 @@ class Vectorizer:
                 self.dict_kp[key] = np.reshape(self.dict_kp[key], (self.frames, 3))
             else:
                 self.dict_kp[key] = np.reshape(self.dict_kp[key], (self.frames, 2))
-
+       
         for key in self.dict_kp:
-            if not os.path.exists("/home/mcc/PycharmProjects/Features_Extractor_HGR/csvs/keypoints/" + self.output_path):
-                os.makedirs("/home/mcc/PycharmProjects/Features_Extractor_HGR/csvs/keypoints/" + self.output_path)
-            np.savetxt("/home/mcc/PycharmProjects/Features_Extractor_HGR/csvs/keypoints/" + self.output_path + "/" + key + ".csv", self.dict_kp[key], delimiter=",")
+            if not os.path.exists("csvs/keypoints/" + self.output_path):
+                os.makedirs("csvs/keypoints/" + self.output_path)
+            np.savetxt("csvs/keypoints/" + self.output_path + "/" + key + ".csv", self.dict_kp[key], delimiter=",")
+        
+        keys = self.finalCsv[0].keys()
+        if not os.path.exists("csvs/keypoints/" + self.output_path):
+            os.makedirs("csvs/keypoints/" + self.output_path)
+
+        with open("csvs/keypoints/" + self.output_path + "/final_keypoints.csv", "w", newline="") as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=keys)
+            writer.writeheader()
+            for data in self.finalCsv:
+                writer.writerow(data)
 
     def angles_csv_generator(self):
         for i in range(self.frames):
@@ -142,12 +178,46 @@ class Vectorizer:
                 self.dict_kp["right_hip"][i][0], self.dict_kp["right_hip"][i][1], self.dict_kp["right_knee"][i][0], self.dict_kp["right_knee"][i][1],
                 self.dict_kp["right_ankle"][i][0], self.dict_kp["right_ankle"][i][1]))
 
+            frame_data = {
+                "etiqueta": self.output_path,
+                "frame": (i+1),
+                "nose-mid_shoulder": self.dict_angles["nose-mid_shoulder"],
+                "mid_shoulder-mid_hip": self.dict_angles["mid_shoulder-mid_hip"],
+                "left_shoulder-left_elbow": self.dict_angles["left_shoulder-left_elbow"],
+                "left_elbow-left_wrist": self.dict_angles["left_elbow-left_wrist"],
+                "right_shoulder-right_elbow": self.dict_angles["right_shoulder-right_elbow"],
+                "right_elbow-right_wrist": self.dict_angles["right_elbow-right_wrist"],
+                "left_hip-left_knee": self.dict_angles["left_hip-left_knee"],
+                "left_knee-left_ankle": self.dict_angles["left_knee-left_ankle"],
+                "right_hip-right_knee": self.dict_angles["right_hip-right_knee"],
+                "right_knee-right_ankle": self.dict_angles["right_knee-right_ankle"],
+                "mid_shoulder_angle": self.dict_angles["mid_shoulder_angle"],
+                "left_shoulder_angle": self.dict_angles["left_shoulder_angle"],
+                "left_elbow_angle": self.dict_angles["left_elbow_angle"],
+                "right_shoulder_angle": self.dict_angles["right_shoulder_angle"],
+                "right_elbow_angle": self.dict_angles["right_elbow_angle"],
+                "left_hip_angle": self.dict_angles["left_hip_angle"],
+                "left_knee_angle": self.dict_angles["left_knee_angle"],
+                "right_hip_angle": self.dict_angles["right_hip_angle"],
+                "right_knee_angle": self.dict_angles["right_knee_angle"]
+            }
+            self.finalcsvAngles.append(frame_data)
+
         for key in self.dict_angles:
             self.dict_angles[key] = np.reshape(self.dict_angles[key], (self.frames, 1))
         for key in self.dict_angles:
-            if not os.path.exists("/home/mcc/PycharmProjects/Features_Extractor_HGR/csvs/angles/" + self.output_path):
-                os.makedirs("/home/mcc/PycharmProjects/Features_Extractor_HGR/csvs/angles/" + self.output_path)
-            np.savetxt("/home/mcc/PycharmProjects/Features_Extractor_HGR/csvs/angles/" + self.output_path + "/" + key + ".csv", self.dict_angles[key], delimiter=",")
+            if not os.path.exists("csvs/angles/" + self.output_path):
+                os.makedirs("csvs/angles/" + self.output_path)
+            np.savetxt("csvs/angles/" + self.output_path + "/" + key + ".csv", self.dict_angles[key], delimiter=",")
+        
+        keys = self.finalcsvAngles[0].keys()
+        if not os.path.exists("csvs/angles/" + self.output_path):
+            os.makedirs("csvs/angles/" + self.output_path)
+        with open("csvs/angles/" + self.output_path + "/final_angles.csv", "w", newline="") as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=keys)
+            writer.writeheader()
+            for data in self.finalcsvAngles:
+                writer.writerow(data)
 
     def plotter(self):
         for key in self.dict_angles:
@@ -158,7 +228,7 @@ class Vectorizer:
             my_plot.xlabel("Frames")
             my_plot.ylabel("Angles")
             my_plot.plot(x, y, color="blue")
-            if not os.path.exists("/home/mcc/PycharmProjects/Features_Extractor_HGR/plots/" + self.output_path):
-                os.makedirs("/home/mcc/PycharmProjects/Features_Extractor_HGR/plots/" + self.output_path)
-            my_plot.savefig("/home/mcc/PycharmProjects/Features_Extractor_HGR/plots/" + self.output_path + "/" + key + ".png")
+            if not os.path.exists("plots/" + self.output_path):
+                os.makedirs("plots/" + self.output_path)
+            my_plot.savefig("plots/" + self.output_path + "/" + key + ".png")
 
