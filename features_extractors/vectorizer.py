@@ -19,6 +19,7 @@ def anglescalculaatorsthreepoints(a1, a2, b1, b2, c1, c2):
 
 class Vectorizer:
     def __init__(self, output_path):
+        self.lstcsv = []
         self.finalCsv = []
         self.finalcsvAngles = []
         self.dict_kp = {
@@ -87,24 +88,28 @@ class Vectorizer:
         frame_data = {
             "etiqueta": self.output_path,
             "frame": self.frames,
-            "nose": self.dict_kp["nose"][-1].tolist(),
-            "left_shoulder": self.dict_kp["left_shoulder"][-1].tolist(),
-            "right_shoulder": self.dict_kp["right_shoulder"][-1].tolist(),
-            "left_elbow": self.dict_kp["left_elbow"][-1].tolist(),
-            "right_elbow": self.dict_kp["right_elbow"][-1].tolist(),
-            "left_wrist": self.dict_kp["left_wrist"][-1].tolist(),
-            "right_wrist": self.dict_kp["right_wrist"][-1].tolist(),
-            "left_hip": self.dict_kp["left_hip"][-1].tolist(),
-            "right_hip": self.dict_kp["right_hip"][-1].tolist(),
-            "left_knee": self.dict_kp["left_knee"][-1].tolist(),
-            "right_knee": self.dict_kp["right_knee"][-1].tolist(),
-            "left_ankle": self.dict_kp["left_ankle"][-1].tolist(),
-            "right_ankle": self.dict_kp["right_ankle"][-1].tolist(),
-            "mid_shoulder": self.dict_kp["mid_shoulder"][-1].tolist(),
-            "mid_hip": self.dict_kp["mid_hip"][-1].tolist()
+            "nose": np.append(self.dict_kp["nose"], vectors[0]),
+            "left_shoulder": np.append(self.dict_kp["left_shoulder"], vectors[5]),
+            "right_shoulder": np.append(self.dict_kp["right_shoulder"], vectors[6]),
+            "left_elbow": np.append(self.dict_kp["left_elbow"], vectors[7]),
+            "right_elbow": np.append(self.dict_kp["right_elbow"], vectors[8]),
+            "left_wrist": np.append(self.dict_kp["left_wrist"], vectors[9]),
+            "right_wrist": np.append(self.dict_kp["right_wrist"], vectors[10]),
+            "left_hip": np.append(self.dict_kp["left_hip"], vectors[11]),
+            "right_hip": np.append(self.dict_kp["right_hip"], vectors[12]),
+            "left_knee": np.append(self.dict_kp["left_knee"], vectors[13]),
+            "right_knee": np.append(self.dict_kp["right_knee"], vectors[14]),
+            "left_ankle": np.append(self.dict_kp["left_ankle"], vectors[15]),
+            "right_ankle": np.append(self.dict_kp["right_ankle"], vectors[16]),
+            "mid_shoulder": np.append(self.dict_kp["mid_shoulder"], np.array([
+            midscaculators(vectors[5][0], vectors[6][0], vectors[5][1], vectors[6][1])])),
+            "mid_hip": np.append(self.dict_kp["mid_hip"], np.array([
+            midscaculators(vectors[11][0], vectors[12][0], vectors[11][1], vectors[12][1])]))
         }
-        self.finalCsv.append(frame_data)
 
+        
+        self.finalCsv.append(frame_data)
+        frame_data = {}
 
     def keypoints_csv_generator(self):
         for key in self.dict_kp:
