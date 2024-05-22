@@ -275,4 +275,5 @@ class Vectorizer:
             if not os.path.exists("plots/" + self.output_path):
                 os.makedirs("plots/" + self.output_path)
             my_plot.savefig("plots/" + self.output_path + "/" + key + ".png")
+            my_plot.close()
 

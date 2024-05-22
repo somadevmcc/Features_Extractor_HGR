@@ -108,6 +108,7 @@ class DensePoseResultsMplContourVisualizer(DensePoseResultsVisualizer):
         context["canvas"] = canvas
         extent = (0, image_bgr.shape[1], image_bgr.shape[0], 0)
         plt.imshow(image_bgr[:, :, ::-1], extent=extent)
+        plt.close()
         return context
 
     def context_to_image_bgr(self, context):
