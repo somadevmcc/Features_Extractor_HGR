@@ -1,3 +1,4 @@
+
 Instrucciones de uso:
 1.- Asegurar tener Docker desktop(o equivalente en linux) abierto
 2.- Abrir la raíz del proyecto
@@ -6,6 +7,14 @@ Instrucciones de uso:
 5.- Esperar que se construya el contenedor
 6.- Cuando termine escribir "docker compose up" para ejecutar
 
+Caso especial:
+Esta herramienta espera que tengas una GPU nvidia para funcionar
+En caso de no contar con una entonces debes modificar
+
+El archivo 'DensePose\dense.py'
+    buscar la (20) linea self.cfg.MODEL.DEVICE = 0 y cambiarla por self.cfg.MODEL.DEVICE = 'cpu'
+Tambien el archivo 'detectron2\detectron.py'
+    buscar la (19) linea self.cfg.MODEL.DEVICE = 0 y cambiarla por self.cfg.MODEL.DEVICE = 'cpu'
 
 Notas:
 Los videos deben ir en la carpeta "video-inputs"
