@@ -4,8 +4,8 @@ from detectron2.detectron import Detectron
 from DensePose.dense import Dense
 
 def main():
-    video_path = "video-inputs/subject_02.avi"
-    name = "subject_14"
+    video_path = "video-inputs/fernando1.mp4"
+    name = "fernando1"
 
     obj_det = Detectron(video_path, name)
     obj_den = Dense(video_path, name)
