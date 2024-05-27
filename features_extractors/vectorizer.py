@@ -1,10 +1,12 @@
 import os.path
-
+import os
 import numpy as np
 import math
 import pandas as pd
 from matplotlib import pyplot as my_plot
 import csv
+import ast
+
 
 def midscaculators(left_x, right_x, left_y, right_y):
     mid = np.array([((left_x + right_x) / 2), ((left_y + right_y) / 2)])
@@ -130,7 +132,7 @@ class Vectorizer:
 
 
         df = pd.DataFrame(self.finalCsv)
-        df.to_csv('csvs/keypoints/' + self.output_path + '/' + 'final_keypoints' + '.csv', index=False)
+        df.to_csv('csvs/keypoints/' + self.output_path + '/' + 'final_keypoints' + '.csv', index=False,mode='w+')
 
 
     def angles_csv_generator(self):
@@ -222,6 +224,7 @@ class Vectorizer:
             frame_data['left_shoulder-left_elbow']=(self.dict_angles["left_shoulder-left_elbow"][i].tolist())
             frame_data['left_elbow-left_wrist']=(self.dict_angles["left_elbow-left_wrist"][i].tolist())
             frame_data['right_shoulder-right_elbow']=(self.dict_angles["right_shoulder-right_elbow"][i].tolist())
+            frame_data['right_elbow-right_wrist']=(self.dict_angles["right_elbow-right_wrist"][i].tolist())
             frame_data['left_hip-left_knee']=(self.dict_angles["left_hip-left_knee"][i].tolist())
             frame_data['left_knee-left_ankle']=(self.dict_angles["left_knee-left_ankle"][i].tolist())
             frame_data['right_hip-right_knee']=(self.dict_angles["right_hip-right_knee"][i].tolist())
@@ -260,8 +263,82 @@ class Vectorizer:
                         "right_hip_angle":              '',
                         "right_knee_angle":         ''}
             
-            df = pd.DataFrame(self.finalCsv)
-            df.to_csv('csvs/angles/' + self.output_path + '/' + 'final_angles' + '.csv', index=False)
+            df = pd.DataFrame(self.finalcsvAngles)
+            df.to_csv('csvs/angles/' + self.output_path + '/' + 'final_angles' + '.csv', index=False,mode='w+')
+            
+    
+    
+    def framesKeypointsToImanges(self):
+        # Leer el archivo CSV
+
+        csv_file_path = 'csvs/keypoints/' + self.output_path + '/' + 'final_keypoints' + '.csv'
+        output_dir = 'csvs/keypoints/' + self.output_path + '/' + 'seriesTiempo'
+        data = pd.read_csv(csv_file_path)
+
+        # Crear el directorio si no existe
+        os.makedirs(output_dir, exist_ok=True)
+
+        # Convertir las cadenas de texto de las columnas en numpy arrays
+        columns = ['nose', 'left_shoulder', 'right_shoulder', 'left_elbow', 'right_elbow', 'left_wrist', 
+                'right_wrist', 'left_hip', 'right_hip', 'left_knee', 'right_knee', 'left_ankle', 
+                'right_ankle', 'mid_shoulder', 'mid_hip']
+
+        for column in columns:
+            data[column] = data[column].apply(lambda x: np.array(ast.literal_eval(x)))
+
+        # Dibujar el "mono de palitos" para cada frame y guardar la imagen
+        def plot_skeleton(frame_data, frame_number):
+            frame_number = frame_number + 1
+            my_plot.figure(figsize=(8, 6))
+
+            # Plot each joint
+            for column in columns:
+                x, y = frame_data[column][:2]  # Obtener solo x e y, ignorar el score
+                my_plot.scatter(x, y, label=column)
+
+            # Conectar las articulaciones con líneas
+            connections = [
+                ('left_shoulder', 'right_shoulder'),
+                ('left_shoulder', 'left_elbow'),
+                ('left_elbow', 'left_wrist'),
+                ('right_shoulder', 'right_elbow'),
+                ('right_elbow', 'right_wrist'),
+                ('left_shoulder', 'left_hip'),
+                ('right_shoulder', 'right_hip'),
+                ('left_hip', 'right_hip'),
+                ('left_hip', 'left_knee'),
+                ('left_knee', 'left_ankle'),
+                ('right_hip', 'right_knee'),
+                ('right_knee', 'right_ankle'),
+                ('nose', 'mid_shoulder'),
+                ('mid_shoulder', 'left_shoulder'),
+                ('mid_shoulder', 'right_shoulder'),
+                ('mid_shoulder', 'mid_hip'),
+                ('mid_hip', 'left_hip'),
+                ('mid_hip', 'right_hip')
+            ]
+
+            for joint1, joint2 in connections:
+                x1, y1 = frame_data[joint1][:2]
+                x2, y2 = frame_data[joint2][:2]
+                my_plot.plot([x1, x2], [y1, y2], 'k-')
+
+            my_plot.title(f'Gráfico de Articulaciones - Frame {frame_number}')
+            my_plot.xlabel('Coordenada X')
+            my_plot.ylabel('Coordenada Y')
+            my_plot.gca().invert_yaxis()  # Invertir el eje Y para que el origen esté en la esquina superior izquierda
+            my_plot.legend()
+
+            # Guardar la imagen en el directorio especificado
+            output_path = os.path.join(output_dir, f'frame_{frame_number:04d}.png')
+            my_plot.savefig(output_path)
+            my_plot.close()
+
+        # Graficar y guardar el "mono de palitos" para cada frame
+        for i in range(len(data)):
+            plot_skeleton(data.loc[i], i)
+
+    print("Imágenes de monitos de palitos guardadas en el directorio especificado.")
 
     def plotter(self):
         for key in self.dict_angles:

@@ -51,5 +51,6 @@ class Detectron:
         self.outvid.release()
         self.vec.keypoints_csv_generator()
         self.vec.angles_csv_generator()
+        self.vec.framesKeypointsToImanges()
         self.vec.plotter()
 
