@@ -22,6 +22,7 @@ def anglescalculaatorsthreepoints(a1, a2, b1, b2, c1, c2):
 
 class Vectorizer:
     def __init__(self, output_path):
+        self.etiquetaID = 0
         self.finalCsv = []
         self.finalcsvAngles = []
         self.dict_kp = {
@@ -89,21 +90,34 @@ class Vectorizer:
         
     def checarEtiqueta(self,etiqueta):
         cur,connection = con.conexion()
-        cur.execute("select idu from cat_etiquetas where nombre ilike '%"+etiqueta+"%'")
+        cur.execute("select idu from cat_mascaras where nombre ilike '%"+etiqueta+"%'")
         rows = cur.fetchall()
         if len(rows) == 0:
-            cur.execute("insert into cat_etiquetas (nombre) values ('"+etiqueta+"')")
+            cur.execute("insert into cat_mascaras (nombre) values ('"+etiqueta+"')")
             connection.commit()
+            cur.execute("select idu from cat_mascaras where nombre ilike '%"+etiqueta+"%'")
+            rows = cur.fetchall()
+            self.etiquetaID = rows[0][0]
+        else:
+            self.etiquetaID = rows[0][0]
+        
+
+    def checarctlEtiquetas(self):
+        cur,connection = con.conexion()
+        cur.execute("select idu from ctl_mascaras where idu_cat_mascaras = '"+str(self.etiquetaID)+"'")
+        rows = cur.fetchall()
+        print(len(rows))
+        if len(rows) > 0:
+            cur.execute("delete from ctl_mascaras where idu_cat_mascaras = '"+str(self.etiquetaID)+"'")
+            connection.commit()
+        
+            
         
     
     def insertarEtiqueta(self,frame_data):
         cur,connection = con.conexion()
-        cur.execute("select idu from cat_etiquetas where nombre ilike '%"+frame_data['etiqueta']+"%'")
-        rows = cur.fetchall()
-        etiquetaID = rows[0][0]
-
-        cur.execute("insert into ctl_etiquetas (idu_cat_mascaras, frame, nose, left_shoulder, right_shoulder, left_elbow, right_elbow, left_wrist, right_wrist, left_hip, right_hip, left_knee, right_knee, left_ankle, right_ankle, mid_shoulder, mid_hip) values ('"
-                    +str(frame_data['etiquetaID'])+"',  )")
+        cur.execute("insert into ctl_mascaras (idu_cat_mascaras, frame, nose, left_shoulder, right_shoulder, left_elbow, right_elbow, left_wrist, right_wrist, left_hip, right_hip, left_knee, right_knee, left_ankle, right_ankle, mid_shoulder, mid_hip) values ('"
+                    +str(self.etiquetaID)+"', '"+str(frame_data['frame'])+"', '"+str(frame_data['nose'])+"', '"+str(frame_data['left_shoulder'])+"', '"+str(frame_data['right_shoulder'])+"', '"+str(frame_data['left_elbow'])+"', '"+str(frame_data['right_elbow'])+"', '"+str(frame_data['left_wrist'])+"', '"+str(frame_data['right_wrist'])+"', '"+str(frame_data['left_hip'])+"', '"+str(frame_data['right_hip'])+"', '"+str(frame_data['left_knee'])+"', '"+str(frame_data['right_knee'])+"', '"+str(frame_data['left_ankle'])+"', '"+str(frame_data['right_ankle'])+"', '"+str(frame_data['mid_shoulder'])+"', '"+str(frame_data['mid_hip'],)+"')")
         connection.commit()
 
     def keypoints_csv_generator(self):
@@ -126,6 +140,7 @@ class Vectorizer:
             self.dict_kp[key] = np.array(self.dict_kp[key])
             
         self.checarEtiqueta(self.output_path)
+        self.checarctlEtiquetas()
         for i in range(self.frames):
             frame_data['etiqueta'] = self.output_path
             frame_data['frame']=(i+1)
