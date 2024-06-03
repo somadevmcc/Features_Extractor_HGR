@@ -1,6 +1,7 @@
-.mp4
-.avi
-.csv
+*.mp4
+*.avi
+*.csv
+*.pyc
 csvs/*
 video-inputs/*
 video-outputs/*

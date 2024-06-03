@@ -338,8 +338,6 @@ class Vectorizer:
         for i in range(len(data)):
             plot_skeleton(data.loc[i], i)
 
-    print("Imágenes de monitos de palitos guardadas en el directorio especificado.")
-
     def plotter(self):
         for key in self.dict_angles:
             x = np.arange(0, self.frames)
