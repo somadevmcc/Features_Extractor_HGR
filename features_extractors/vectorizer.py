@@ -6,7 +6,7 @@ import pandas as pd
 from matplotlib import pyplot as my_plot
 import csv
 import ast
-
+from database import Conexiones as con
 
 def midscaculators(left_x, right_x, left_y, right_y):
     mid = np.array([((left_x + right_x) / 2), ((left_y + right_y) / 2)])
@@ -87,7 +87,24 @@ class Vectorizer:
             midscaculators(vectors[11][0], vectors[12][0], vectors[11][1], vectors[12][1])]))
         
         
-     
+    def checarEtiqueta(self,etiqueta):
+        cur,connection = con.conexion()
+        cur.execute("select idu from cat_etiquetas where nombre ilike '%"+etiqueta+"%'")
+        rows = cur.fetchall()
+        if len(rows) == 0:
+            cur.execute("insert into cat_etiquetas (nombre) values ('"+etiqueta+"')")
+            connection.commit()
+        
+    
+    def insertarEtiqueta(self,frame_data):
+        cur,connection = con.conexion()
+        cur.execute("select idu from cat_etiquetas where nombre ilike '%"+frame_data['etiqueta']+"%'")
+        rows = cur.fetchall()
+        etiquetaID = rows[0][0]
+
+        cur.execute("insert into ctl_etiquetas (idu_cat_mascaras, frame, nose, left_shoulder, right_shoulder, left_elbow, right_elbow, left_wrist, right_wrist, left_hip, right_hip, left_knee, right_knee, left_ankle, right_ankle, mid_shoulder, mid_hip) values ('"
+                    +str(frame_data['etiquetaID'])+"',  )")
+        connection.commit()
 
     def keypoints_csv_generator(self):
         
@@ -108,7 +125,7 @@ class Vectorizer:
         for key in self.dict_kp:
             self.dict_kp[key] = np.array(self.dict_kp[key])
             
-
+        self.checarEtiqueta(self.output_path)
         for i in range(self.frames):
             frame_data['etiqueta'] = self.output_path
             frame_data['frame']=(i+1)
@@ -127,12 +144,15 @@ class Vectorizer:
             frame_data['right_ankle']=(self.dict_kp["right_ankle"][i].tolist())
             frame_data['mid_shoulder']=(self.dict_kp["mid_shoulder"][i].tolist())
             frame_data['mid_hip']=(self.dict_kp["mid_hip"][i].tolist())
+            self.insertarEtiqueta(frame_data)
             self.finalCsv.append(frame_data)
             frame_data = {'etiqueta':'', 'frame':'', 'nose':'', 'left_shoulder':'', 'right_shoulder':'', 'left_elbow':'', 'right_elbow':'', 'left_wrist':'', 'right_wrist':'', 'left_hip':'', 'right_hip':'', 'left_knee':'', 'right_knee':'', 'left_ankle':'', 'right_ankle':'', 'mid_shoulder':'', 'mid_hip':''}
 
 
         df = pd.DataFrame(self.finalCsv)
         df.to_csv('csvs/keypoints/' + self.output_path + '/' + 'final_keypoints' + '.csv', index=False,mode='w+')
+
+   
 
 
     def angles_csv_generator(self):

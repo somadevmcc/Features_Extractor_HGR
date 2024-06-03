@@ -19,3 +19,5 @@ cloudpickle
 cython
 fvcore
 pycocotools
+psycopg2
+python-dotenv
