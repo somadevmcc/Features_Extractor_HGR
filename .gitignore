@@ -6,3 +6,4 @@ csvs/*
 video-inputs/*
 video-outputs/*
 *.env
+*.png

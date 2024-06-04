@@ -8,6 +8,7 @@ import csv
 import ast
 from database import Conexiones as con
 
+
 def midscaculators(left_x, right_x, left_y, right_y):
     mid = np.array([((left_x + right_x) / 2), ((left_y + right_y) / 2)])
     return mid
@@ -90,34 +91,43 @@ class Vectorizer:
         
     def checarEtiqueta(self,etiqueta):
         cur,connection = con.conexion()
-        cur.execute("select idu from cat_mascaras where nombre ilike '%"+etiqueta+"%'")
+        cur.execute("select idu from cat_etiquetas where nombre ilike '%"+etiqueta+"%'")
         rows = cur.fetchall()
         if len(rows) == 0:
-            cur.execute("insert into cat_mascaras (nombre) values ('"+etiqueta+"')")
+            cur.execute("insert into cat_etiquetas (nombre) values ('"+etiqueta+"')")
             connection.commit()
-            cur.execute("select idu from cat_mascaras where nombre ilike '%"+etiqueta+"%'")
+            cur.execute("select idu from cat_etiquetas where nombre ilike '%"+etiqueta+"%'")
             rows = cur.fetchall()
             self.etiquetaID = rows[0][0]
         else:
             self.etiquetaID = rows[0][0]
         
 
-    def checarctlEtiquetas(self):
+    def checarCtlKeypoints(self):
         cur,connection = con.conexion()
-        cur.execute("select idu from ctl_mascaras where idu_cat_mascaras = '"+str(self.etiquetaID)+"'")
+        cur.execute("select idu from ctl_keypoints where idu_etiqueta = '"+str(self.etiquetaID)+"'")
         rows = cur.fetchall()
-        print(len(rows))
         if len(rows) > 0:
-            cur.execute("delete from ctl_mascaras where idu_cat_mascaras = '"+str(self.etiquetaID)+"'")
+            cur.execute("delete from ctl_keypoints where idu_etiqueta = '"+str(self.etiquetaID)+"'")
             connection.commit()
-        
-            
-        
-    
-    def insertarEtiqueta(self,frame_data):
+    def checarCtlAngles(self):
         cur,connection = con.conexion()
-        cur.execute("insert into ctl_mascaras (idu_cat_mascaras, frame, nose, left_shoulder, right_shoulder, left_elbow, right_elbow, left_wrist, right_wrist, left_hip, right_hip, left_knee, right_knee, left_ankle, right_ankle, mid_shoulder, mid_hip) values ('"
+        cur.execute("select idu from ctl_angles where idu_etiqueta = '"+str(self.etiquetaID)+"'")
+        rows = cur.fetchall()
+        if len(rows) > 0:
+            cur.execute("delete from ctl_angles where idu_etiqueta = '"+str(self.etiquetaID)+"'")
+            connection.commit()
+
+    def insertarKeypoints(self,frame_data):
+        cur,connection = con.conexion()
+        cur.execute("insert into ctl_keypoints (idu_etiqueta, frame, nose, left_shoulder, right_shoulder, left_elbow, right_elbow, left_wrist, right_wrist, left_hip, right_hip, left_knee, right_knee, left_ankle, right_ankle, mid_shoulder, mid_hip) values ('"
                     +str(self.etiquetaID)+"', '"+str(frame_data['frame'])+"', '"+str(frame_data['nose'])+"', '"+str(frame_data['left_shoulder'])+"', '"+str(frame_data['right_shoulder'])+"', '"+str(frame_data['left_elbow'])+"', '"+str(frame_data['right_elbow'])+"', '"+str(frame_data['left_wrist'])+"', '"+str(frame_data['right_wrist'])+"', '"+str(frame_data['left_hip'])+"', '"+str(frame_data['right_hip'])+"', '"+str(frame_data['left_knee'])+"', '"+str(frame_data['right_knee'])+"', '"+str(frame_data['left_ankle'])+"', '"+str(frame_data['right_ankle'])+"', '"+str(frame_data['mid_shoulder'])+"', '"+str(frame_data['mid_hip'],)+"')")
+        connection.commit()
+
+    def insertarAngles(self,frame_data):
+        cur,connection = con.conexion()
+        cur.execute("insert into ctl_angles (idu_etiqueta, frame, nose_mid_shoulder, mid_shoulder_mid_hip, left_shoulder_left_elbow, left_elbow_left_wrist, right_shoulder_right_elbow, right_elbow_right_wrist, left_hip_left_knee, left_knee_left_ankle, right_hip_right_knee, right_knee_right_ankle, mid_shoulder_angle, left_shoulder_angle, left_elbow_angle, right_shoulder_angle, right_elbow_angle, left_hip_angle, left_knee_angle, right_hip_angle, right_knee_angle) values ('"
+                    +str(self.etiquetaID)+"', '"+str(frame_data['frame'])+"', '"+str(frame_data['nose-mid_shoulder'])+"', '"+str(frame_data['mid_shoulder-mid_hip'])+"', '"+str(frame_data['left_shoulder-left_elbow'])+"', '"+str(frame_data['left_elbow-left_wrist'])+"', '"+str(frame_data['right_shoulder-right_elbow'])+"', '"+str(frame_data['right_elbow-right_wrist'])+"', '"+str(frame_data['left_hip-left_knee'])+"', '"+str(frame_data['left_knee-left_ankle'])+"', '"+str(frame_data['right_hip-right_knee'])+"', '"+str(frame_data['right_knee-right_ankle'])+"', '"+str(frame_data['mid_shoulder_angle'])+"', '"+str(frame_data['left_shoulder_angle'])+"', '"+str(frame_data['left_elbow_angle'])+"', '"+str(frame_data['right_shoulder_angle'])+"', '"+str(frame_data['right_elbow_angle'])+"', '"+str(frame_data['left_hip_angle'])+"', '"+str(frame_data['left_knee_angle'])+"', '"+str(frame_data['right_hip_angle'])+"', '"+str(frame_data['right_knee_angle'])+"')")
         connection.commit()
 
     def keypoints_csv_generator(self):
@@ -138,30 +148,52 @@ class Vectorizer:
 
         for key in self.dict_kp:
             self.dict_kp[key] = np.array(self.dict_kp[key])
-            
-        self.checarEtiqueta(self.output_path)
-        self.checarctlEtiquetas()
-        for i in range(self.frames):
-            frame_data['etiqueta'] = self.output_path
-            frame_data['frame']=(i+1)
-            frame_data['nose']=(self.dict_kp["nose"][i].tolist())
-            frame_data['left_shoulder']=(self.dict_kp["left_shoulder"][i].tolist())
-            frame_data['right_shoulder']=(self.dict_kp["right_shoulder"][i].tolist())
-            frame_data['left_elbow']=(self.dict_kp["left_elbow"][i].tolist())
-            frame_data['right_elbow']=(self.dict_kp["right_elbow"][i].tolist())
-            frame_data['left_wrist']=(self.dict_kp["left_wrist"][i].tolist())
-            frame_data['right_wrist']=(self.dict_kp["right_wrist"][i].tolist())
-            frame_data['left_hip']=(self.dict_kp["left_hip"][i].tolist())
-            frame_data['right_hip']=(self.dict_kp["right_hip"][i].tolist())
-            frame_data['left_knee']=(self.dict_kp["left_knee"][i].tolist())
-            frame_data['right_knee']=(self.dict_kp["right_knee"][i].tolist())
-            frame_data['left_ankle']=(self.dict_kp["left_ankle"][i].tolist())
-            frame_data['right_ankle']=(self.dict_kp["right_ankle"][i].tolist())
-            frame_data['mid_shoulder']=(self.dict_kp["mid_shoulder"][i].tolist())
-            frame_data['mid_hip']=(self.dict_kp["mid_hip"][i].tolist())
-            self.insertarEtiqueta(frame_data)
-            self.finalCsv.append(frame_data)
-            frame_data = {'etiqueta':'', 'frame':'', 'nose':'', 'left_shoulder':'', 'right_shoulder':'', 'left_elbow':'', 'right_elbow':'', 'left_wrist':'', 'right_wrist':'', 'left_hip':'', 'right_hip':'', 'left_knee':'', 'right_knee':'', 'left_ankle':'', 'right_ankle':'', 'mid_shoulder':'', 'mid_hip':''}
+        flag = os.getenv('DBFLAG')
+        if( flag):
+            self.checarEtiqueta(self.output_path)
+            self.checarCtlKeypoints()
+            for i in range(self.frames):
+                frame_data['etiqueta'] = self.output_path
+                frame_data['frame']=(i+1)
+                frame_data['nose']=(self.dict_kp["nose"][i].tolist())
+                frame_data['left_shoulder']=(self.dict_kp["left_shoulder"][i].tolist())
+                frame_data['right_shoulder']=(self.dict_kp["right_shoulder"][i].tolist())
+                frame_data['left_elbow']=(self.dict_kp["left_elbow"][i].tolist())
+                frame_data['right_elbow']=(self.dict_kp["right_elbow"][i].tolist())
+                frame_data['left_wrist']=(self.dict_kp["left_wrist"][i].tolist())
+                frame_data['right_wrist']=(self.dict_kp["right_wrist"][i].tolist())
+                frame_data['left_hip']=(self.dict_kp["left_hip"][i].tolist())
+                frame_data['right_hip']=(self.dict_kp["right_hip"][i].tolist())
+                frame_data['left_knee']=(self.dict_kp["left_knee"][i].tolist())
+                frame_data['right_knee']=(self.dict_kp["right_knee"][i].tolist())
+                frame_data['left_ankle']=(self.dict_kp["left_ankle"][i].tolist())
+                frame_data['right_ankle']=(self.dict_kp["right_ankle"][i].tolist())
+                frame_data['mid_shoulder']=(self.dict_kp["mid_shoulder"][i].tolist())
+                frame_data['mid_hip']=(self.dict_kp["mid_hip"][i].tolist())
+                self.insertarKeypoints(frame_data)
+                self.finalCsv.append(frame_data)
+                frame_data = {'etiqueta':'', 'frame':'', 'nose':'', 'left_shoulder':'', 'right_shoulder':'', 'left_elbow':'', 'right_elbow':'', 'left_wrist':'', 'right_wrist':'', 'left_hip':'', 'right_hip':'', 'left_knee':'', 'right_knee':'', 'left_ankle':'', 'right_ankle':'', 'mid_shoulder':'', 'mid_hip':''}
+        else:
+            for i in range(self.frames):
+                frame_data['etiqueta'] = self.output_path
+                frame_data['frame']=(i+1)
+                frame_data['nose']=(self.dict_kp["nose"][i].tolist())
+                frame_data['left_shoulder']=(self.dict_kp["left_shoulder"][i].tolist())
+                frame_data['right_shoulder']=(self.dict_kp["right_shoulder"][i].tolist())
+                frame_data['left_elbow']=(self.dict_kp["left_elbow"][i].tolist())
+                frame_data['right_elbow']=(self.dict_kp["right_elbow"][i].tolist())
+                frame_data['left_wrist']=(self.dict_kp["left_wrist"][i].tolist())
+                frame_data['right_wrist']=(self.dict_kp["right_wrist"][i].tolist())
+                frame_data['left_hip']=(self.dict_kp["left_hip"][i].tolist())
+                frame_data['right_hip']=(self.dict_kp["right_hip"][i].tolist())
+                frame_data['left_knee']=(self.dict_kp["left_knee"][i].tolist())
+                frame_data['right_knee']=(self.dict_kp["right_knee"][i].tolist())
+                frame_data['left_ankle']=(self.dict_kp["left_ankle"][i].tolist())
+                frame_data['right_ankle']=(self.dict_kp["right_ankle"][i].tolist())
+                frame_data['mid_shoulder']=(self.dict_kp["mid_shoulder"][i].tolist())
+                frame_data['mid_hip']=(self.dict_kp["mid_hip"][i].tolist())
+                self.finalCsv.append(frame_data)
+                frame_data = {'etiqueta':'', 'frame':'', 'nose':'', 'left_shoulder':'', 'right_shoulder':'', 'left_elbow':'', 'right_elbow':'', 'left_wrist':'', 'right_wrist':'', 'left_hip':'', 'right_hip':'', 'left_knee':'', 'right_knee':'', 'left_ankle':'', 'right_ankle':'', 'mid_shoulder':'', 'mid_hip':''}
 
 
         df = pd.DataFrame(self.finalCsv)
@@ -250,34 +282,35 @@ class Vectorizer:
                         "left_knee_angle":              '',
                         "right_hip_angle":              '',
                         "right_knee_angle":         ''}
-        
-        for i in range(self.frames):
-            frame_data['etiqueta'] = self.output_path
-            frame_data['frame']=(i+1)
-            frame_data['nose-mid_shoulder']=(self.dict_angles["nose-mid_shoulder"][i].tolist())
-            frame_data['mid_shoulder-mid_hip']=(self.dict_angles["mid_shoulder-mid_hip"][i].tolist())
-            frame_data['left_shoulder-left_elbow']=(self.dict_angles["left_shoulder-left_elbow"][i].tolist())
-            frame_data['left_elbow-left_wrist']=(self.dict_angles["left_elbow-left_wrist"][i].tolist())
-            frame_data['right_shoulder-right_elbow']=(self.dict_angles["right_shoulder-right_elbow"][i].tolist())
-            frame_data['right_elbow-right_wrist']=(self.dict_angles["right_elbow-right_wrist"][i].tolist())
-            frame_data['left_hip-left_knee']=(self.dict_angles["left_hip-left_knee"][i].tolist())
-            frame_data['left_knee-left_ankle']=(self.dict_angles["left_knee-left_ankle"][i].tolist())
-            frame_data['right_hip-right_knee']=(self.dict_angles["right_hip-right_knee"][i].tolist())
-            frame_data['right_knee-right_ankle']=(self.dict_angles["right_knee-right_ankle"][i].tolist())
-            frame_data['mid_shoulder_angle']=(self.dict_angles["mid_shoulder_angle"][i].tolist())
-            frame_data['left_shoulder_angle']=(self.dict_angles["left_shoulder_angle"][i].tolist())
-            frame_data['left_elbow_angle']=(self.dict_angles["left_elbow_angle"][i].tolist())
-            frame_data['right_shoulder_angle']=(self.dict_angles["right_shoulder_angle"][i].tolist())
-            frame_data['right_elbow_angle']=(self.dict_angles["right_elbow_angle"][i].tolist())
-            frame_data['left_hip_angle']=(self.dict_angles["left_hip_angle"][i].tolist())
-            frame_data['left_knee_angle']=(self.dict_angles["left_knee_angle"][i].tolist())
-            frame_data['right_hip_angle']=(self.dict_angles["right_hip_angle"][i].tolist())
-            frame_data['right_knee_angle']=(self.dict_angles["right_knee_angle"][i].tolist())
-            
-            self.finalcsvAngles.append(frame_data)
-            frame_data = {'etiqueta':'',
+        if os.getenv('DBFLAG'):
+            self.checarEtiqueta(self.output_path)
+            self.checarCtlAngles()
+            for i in range(self.frames):
+                frame_data['etiqueta'] = self.output_path
+                frame_data['frame']=(i+1)
+                frame_data['nose-mid_shoulder']=(self.dict_angles["nose-mid_shoulder"][i].tolist())
+                frame_data['mid_shoulder-mid_hip']=(self.dict_angles["mid_shoulder-mid_hip"][i].tolist())
+                frame_data['left_shoulder-left_elbow']=(self.dict_angles["left_shoulder-left_elbow"][i].tolist())
+                frame_data['left_elbow-left_wrist']=(self.dict_angles["left_elbow-left_wrist"][i].tolist())
+                frame_data['right_shoulder-right_elbow']=(self.dict_angles["right_shoulder-right_elbow"][i].tolist())
+                frame_data['right_elbow-right_wrist']=(self.dict_angles["right_elbow-right_wrist"][i].tolist())
+                frame_data['left_hip-left_knee']=(self.dict_angles["left_hip-left_knee"][i].tolist())
+                frame_data['left_knee-left_ankle']=(self.dict_angles["left_knee-left_ankle"][i].tolist())
+                frame_data['right_hip-right_knee']=(self.dict_angles["right_hip-right_knee"][i].tolist())
+                frame_data['right_knee-right_ankle']=(self.dict_angles["right_knee-right_ankle"][i].tolist())
+                frame_data['mid_shoulder_angle']=(self.dict_angles["mid_shoulder_angle"][i].tolist())
+                frame_data['left_shoulder_angle']=(self.dict_angles["left_shoulder_angle"][i].tolist())
+                frame_data['left_elbow_angle']=(self.dict_angles["left_elbow_angle"][i].tolist())
+                frame_data['right_shoulder_angle']=(self.dict_angles["right_shoulder_angle"][i].tolist())
+                frame_data['right_elbow_angle']=(self.dict_angles["right_elbow_angle"][i].tolist())
+                frame_data['left_hip_angle']=(self.dict_angles["left_hip_angle"][i].tolist())
+                frame_data['left_knee_angle']=(self.dict_angles["left_knee_angle"][i].tolist())
+                frame_data['right_hip_angle']=(self.dict_angles["right_hip_angle"][i].tolist())
+                frame_data['right_knee_angle']=(self.dict_angles["right_knee_angle"][i].tolist())
+                self.insertarAngles(frame_data)
+                self.finalcsvAngles.append(frame_data)
+                frame_data = {'etiqueta':'',
                         'frame':'',
-                        "frame":                        '',
                         "nose-mid_shoulder":            '',
                         "mid_shoulder-mid_hip":        '',
                         "left_shoulder-left_elbow":     '',
@@ -297,6 +330,55 @@ class Vectorizer:
                         "left_knee_angle":              '',
                         "right_hip_angle":              '',
                         "right_knee_angle":         ''}
+
+        else:
+            for i in range(self.frames):
+                frame_data['etiqueta'] = self.output_path
+                frame_data['frame']=(i+1)
+                frame_data['nose-mid_shoulder']=(self.dict_angles["nose-mid_shoulder"][i].tolist())
+                frame_data['mid_shoulder-mid_hip']=(self.dict_angles["mid_shoulder-mid_hip"][i].tolist())
+                frame_data['left_shoulder-left_elbow']=(self.dict_angles["left_shoulder-left_elbow"][i].tolist())
+                frame_data['left_elbow-left_wrist']=(self.dict_angles["left_elbow-left_wrist"][i].tolist())
+                frame_data['right_shoulder-right_elbow']=(self.dict_angles["right_shoulder-right_elbow"][i].tolist())
+                frame_data['right_elbow-right_wrist']=(self.dict_angles["right_elbow-right_wrist"][i].tolist())
+                frame_data['left_hip-left_knee']=(self.dict_angles["left_hip-left_knee"][i].tolist())
+                frame_data['left_knee-left_ankle']=(self.dict_angles["left_knee-left_ankle"][i].tolist())
+                frame_data['right_hip-right_knee']=(self.dict_angles["right_hip-right_knee"][i].tolist())
+                frame_data['right_knee-right_ankle']=(self.dict_angles["right_knee-right_ankle"][i].tolist())
+                frame_data['mid_shoulder_angle']=(self.dict_angles["mid_shoulder_angle"][i].tolist())
+                frame_data['left_shoulder_angle']=(self.dict_angles["left_shoulder_angle"][i].tolist())
+                frame_data['left_elbow_angle']=(self.dict_angles["left_elbow_angle"][i].tolist())
+                frame_data['right_shoulder_angle']=(self.dict_angles["right_shoulder_angle"][i].tolist())
+                frame_data['right_elbow_angle']=(self.dict_angles["right_elbow_angle"][i].tolist())
+                frame_data['left_hip_angle']=(self.dict_angles["left_hip_angle"][i].tolist())
+                frame_data['left_knee_angle']=(self.dict_angles["left_knee_angle"][i].tolist())
+                frame_data['right_hip_angle']=(self.dict_angles["right_hip_angle"][i].tolist())
+                frame_data['right_knee_angle']=(self.dict_angles["right_knee_angle"][i].tolist())
+                self.finalcsvAngles.append(frame_data)
+                frame_data = {'etiqueta':'',
+                        'frame':'',
+                        "nose-mid_shoulder":            '',
+                        "mid_shoulder-mid_hip":        '',
+                        "left_shoulder-left_elbow":     '',
+                        "left_elbow-left_wrist":        '',
+                        "right_shoulder-right_elbow":   '',
+                        "right_elbow-right_wrist":      '',
+                        "left_hip-left_knee":           '',
+                        "left_knee-left_ankle":         '',
+                        "right_hip-right_knee":         '',
+                        "right_knee-right_ankle":       '',
+                        "mid_shoulder_angle":           '',
+                        "left_shoulder_angle":          '',
+                        "left_elbow_angle":             '',
+                        "right_shoulder_angle":         '',
+                        "right_elbow_angle":            '',
+                        "left_hip_angle":               '',
+                        "left_knee_angle":              '',
+                        "right_hip_angle":              '',
+                        "right_knee_angle":         ''}
+
+
+            
             
             df = pd.DataFrame(self.finalcsvAngles)
             df.to_csv('csvs/angles/' + self.output_path + '/' + 'final_angles' + '.csv', index=False,mode='w+')
