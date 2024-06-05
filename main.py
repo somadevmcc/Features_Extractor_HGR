@@ -12,17 +12,12 @@ def main():
 
         obj_det = Detectron(video_path, name)
         obj_den = Dense(video_path, name)
-
-        t1 = Thread(target=obj_det.videoSkeleton)
-        t2 = Thread(target=obj_den.videoMask)
-
+        
         start_time = perf_counter()
+        obj_det.videoSkeleton()
+        obj_den.videoMask()
+        
 
-        t1.start()
-        t2.start()
-
-        t1.join()
-        t2.join()
 
         end_time = perf_counter()
 

@@ -10,6 +10,8 @@ from DensePose.densepose.structures import DensePoseDataRelative
 from ..structures import DensePoseChartResult
 from .base import Boxes, Image, MatrixVisualizer
 
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 class DensePoseResultsVisualizer(object):
     def visualize(
@@ -92,9 +94,8 @@ class DensePoseResultsMplContourVisualizer(DensePoseResultsVisualizer):
         self.plot_args = kwargs
 
     def create_visualization_context(self, image_bgr: Image):
-        import matplotlib.pyplot as plt
-        from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-        plt.figure()
+        
+        
         context = {}
         context["image_bgr"] = image_bgr
         dpi = 100
@@ -108,7 +109,6 @@ class DensePoseResultsMplContourVisualizer(DensePoseResultsVisualizer):
         context["canvas"] = canvas
         extent = (0, image_bgr.shape[1], image_bgr.shape[0], 0)
         plt.imshow(image_bgr[:, :, ::-1], extent=extent)
-        
         return context
 
     def context_to_image_bgr(self, context):
@@ -116,9 +116,10 @@ class DensePoseResultsMplContourVisualizer(DensePoseResultsVisualizer):
         w, h = map(int, fig.get_size_inches() * fig.get_dpi())
         canvas = context["canvas"]
         canvas.draw()
-        image_1d = np.fromstring(canvas.tostring_rgb(), dtype="uint8")
+        image_1d = np.frombuffer(canvas.tostring_rgb(), dtype="uint8")
         image_rgb = image_1d.reshape(h, w, 3)
         image_bgr = image_rgb[:, :, ::-1].copy()
+        plt.close(fig)  # Close the figure to free up memory
         return image_bgr
 
     def visualize_iuv_arr(self, context, iuv_arr: np.ndarray, bbox_xywh: Boxes) -> None:
@@ -133,7 +134,8 @@ class DensePoseResultsMplContourVisualizer(DensePoseResultsVisualizer):
             bbox_xywh[1] + bbox_xywh[3],
         )
         plt.contour(u, self.levels, extent=extent, **self.plot_args)
-        plt.contour(v, self.levels, extent=extent, **self.plot_args) #aqui se encuentra la matriz de malla
+        plt.contour(v, self.levels, extent=extent, **self.plot_args)
+
 
 
 class DensePoseResultsCustomContourVisualizer(DensePoseResultsVisualizer):
