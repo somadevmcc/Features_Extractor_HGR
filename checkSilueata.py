@@ -33,7 +33,7 @@ def mascaraFrame(numFrame):
 
 # Define the path to the video file
 video_path = r'video-inputs\FERNANDO_01.mp4'
-output_path = 'video-outputs/FERNANDO_01_cut.mp4'
+output_path = 'video-outputs/FERNANDO_02_cut.mp4'
 
 
 # Initialize the PoseDetector
@@ -101,6 +101,7 @@ while cap.isOpened():
         if cropped_frame.size != 0:
             # Resize cropped frame back to original frame size
             resized_cropped_frame = cv2.resize(cropped_frame, (width, height))
+            resized_cropped_frame = cv2.cvtColor(resized_cropped_frame, cv2.COLOR_BGR2GRAY)
             
             # Write the resized cropped frame to the output video
             out.write(resized_cropped_frame)
